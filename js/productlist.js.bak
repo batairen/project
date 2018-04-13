@@ -1,0 +1,137 @@
+/**$( document ).ready(function() {
+    var xhr=new XMLHttpRequest();
+		xhr.onreadystatechange = function(){
+				if(xhr.readyState===4&& xhr.status===200){
+					var data= JSON.parse(xhr.responseText);
+					var html="";
+			for(var i=0;i<data.length;i++){
+				var obj = data[i];
+				
+				html +=`<li><a href=''><img src='${obj.pic}' alt=''/></a><p>${obj.price}</p><h1><a href=''>${obj.pname}</a></h1><div><a href='' class='contrast'><i></i>对比</a>
+                               <a href=''class='p-operate'><i></i>关注</a>
+                               <a href='${obj.pid}' class='addcart'><i></i>加入购物车</a>
+                           </div>
+                        </li>`;
+			}
+			$("#plist ul").html(html);
+		}else{
+			alert ("error"+data);
+		}
+	}
+			xhr.open('GET','product_list.php',true);
+			xhr.send(null);
+});**/
+$(function(){
+	var uname = null;
+	var upwd =null;
+	$('#bt-login').click(function(){
+		var u= $("#uname").val();
+		var p= $("#upwd").val();
+		$.ajax(
+		{	type:'GET',
+			url:'jd_login.php',
+			data:{uname:u,upwd:p},
+			success:function(data){
+			var rs = parseInt(data);
+			if(rs<0){
+				$("p.alert").html("wrong username or password");
+			}else{
+				$(".modal").hide();
+				document.cookie = 'uid='+data;
+				document.cookie = 'uname='+u;
+			}
+		},
+			error:function(){
+				alert("error");
+			}
+		}	
+		); 
+		
+	})
+	
+	//product list
+	
+	loadPage(3);
+	function loadPage(page){		
+	$.ajax({
+		type:'GET',
+		url:'product_list.php',
+		data:{pageNo:page},
+		success:function(data){
+			var html="";
+			for(var i=0;i<data.length;i++){
+				var obj = data[i];
+				html +=`<li><a href=""><img src='${obj.pic}' alt''></a>
+				<p>${obj.price}</p>
+				<h1><a href=''>${obj.pname}</a></h1>
+					<div><a href="" class="contrast"><i></i>对比</a>
+                               <a href=''class='p-operate'><i></i>关注</a>
+                               <a href="${obj.pid}" class='addcart'><i></i>加入购物车</a>
+                           </div>
+                        </li>`;
+			}
+			$("#plist ul").html(html);
+		},
+			error:function(){
+				alert ("error");
+		}
+	});
+	}
+	//加载头文件和尾文件
+	$("#header").load("header.php");
+	$("#footer").load("footer.php");
+	//添加购物车
+	//为动态元素添加事件要用代理事件 
+	$("#plist").on('click','a.addcart',function(e){
+		e.preventDefault();
+		var pid= $(this).attr("href");
+		$.ajax({
+			'type':'POST',
+			'url':'add_cart.php',
+			data:{uid:getCookieVal('uid'),pid:pid},
+			success:function(data){
+				if(data>0){
+					alert("success"+data);
+				}else{
+					alert("failure");
+				}
+			},
+			error:function(){
+				alert("failure check your connection");
+			},
+		});
+	});
+	$("ol.pager a").click(function(e){
+		e.preventDefault();
+		var page = $(this).html();
+		loadPage(page);
+		$("ol.pager a.active").removeClass("active");
+		console.log($('ol.pager a.active'));
+		$(this).addClass("active");
+	});
+
+});
+
+$(document.body).on('click','#settle_up',function(){
+	location.href='shoppingcart.html';
+});
+function getCookieVal(key){
+		var rs=null;
+		var line = document.cookie;
+		//'uname=xx; uid=xx';
+		var arr= line.split(";");
+		for(var i=0;i<arr.length;i++){
+			var kv=arr[i];
+			var option= kv.split("=");
+			//uname=xx 去除前后空格
+			var k=option[0].trim();
+			//uname
+			var v=option[1];
+			//xx
+			if(key===k){
+				return v;
+			}
+		} 
+		return rs;
+	}
+	
